@@ -11,7 +11,7 @@
 #     Have all files/folders for analysis in ~/Desktop/RNAseq stuff/SamplesForAnalysis
 #     Have a file named sample_key.csv in directory:
 #         with filenames in column 'file_names'
-#         sample IDs in column titled code_name
+#         sample IDs in column titled short_name
 ######################################################
 
 # Need to import the .tsv output files using tximport
