@@ -11,28 +11,6 @@
 #    
 ######################################################
 
-## Add annotation - symbol and entrezID
-library(AnnotationDbi)
-library(org.Hs.eg.db)
-columns(org.Hs.eg.db)
-
-# Add column for gene name (symbol)
-res$symbol <- mapIds(org.Hs.eg.db,
-                     keys = row.names(res),
-                     column = 'SYMBOL',
-                     keytype = 'ENSEMBL',
-                     multiVals = 'first')
-# Add column for gene Entrez ID
-res$entrez <- mapIds(org.Hs.eg.db,
-                     keys = rownames(res),
-                     column = 'ENTREZID',
-                     keytype = 'ENSEMBL',
-                     multiVals = 'first')
-# Put results in order of the gene with the lowest p value
-resOrdered <- res[order(res$pvalue),]
-head(resOrdered)
-
-
 # Filtering of rows without any counts
 # There are lots of rows with zero counts
 nrow(dds)
@@ -44,7 +22,7 @@ nrow(dds)
 
 ## Perform variance stabilizing transformations using rlog
 # Should use argument 'blind = FALSE' but it gives an error code if there aren't multiple replicates.
-rld <- rlog(dds, blind = FALSE)
+rld <- rlog(dds)
 head(assay(rld), 3)
 
 # Assess overall similarity between samples using Sample Distances
@@ -67,12 +45,34 @@ plotPCA(rld, intgroup = 'condition')
 
 
 ## Differential expression analysis
+# Make sure there are experimental replicates. Will not work if there aren't.
 dds <- DESeq(dds)
 
 # Build results table. Automatically compares fold change between samples (?)
 res <- results(dds)
 res
 summary(res)
+
+## Add annotation - symbol and entrezID
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+columns(org.Hs.eg.db)
+
+# Add column for gene name (symbol)
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys = row.names(res),
+                     column = 'SYMBOL',
+                     keytype = 'ENSEMBL',
+                     multiVals = 'first')
+# Add column for gene Entrez ID
+res$entrez <- mapIds(org.Hs.eg.db,
+                     keys = rownames(res),
+                     column = 'ENTREZID',
+                     keytype = 'ENSEMBL',
+                     multiVals = 'first')
+# Put results in order of the gene with the lowest p value
+resOrdered <- res[order(res$pvalue),]
+head(resOrdered)
 
 ## Be more strict with results: lower false discovery rate threshold (padj) from 10% to 5%
 res.05 <- results(dds, alpha = 0.05)
