@@ -48,6 +48,3 @@ with(subset(res, padj<0.05 & abs(log2FoldChange)>1), points(log2FoldChange, -log
 # install.packages('calibrate')
 library(calibrate)
 with(subset(res, padj<0.05 & abs(log2FoldChange)>1), textxy(log2FoldChange, -log10(pvalue), labs=symbol, cex=.5) )
-
-
-

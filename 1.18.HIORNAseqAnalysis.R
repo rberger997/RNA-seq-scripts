@@ -196,7 +196,7 @@ topVarGeneIDs <- res[rownames(mat), 7]
 pheatmap(mat, annotation_col = anno, labels_row = topVarGeneIDs)
 
 # Make a cluster heatmap of a custom list of genes
-gene_list <- c('MT1G', 'MT1E', 'MT2A')
+gene_list <- c('MT1A', 'MT1E', 'MT1F', 'MT1G', 'MT1H', 'MT1X', 'MT2A')
 x <- row.names(subset(res, symbol %in% gene_list))
 mat1 <- assay(rld)[x, ]
 mat1 <- mat1 - rowMeans(mat1)
