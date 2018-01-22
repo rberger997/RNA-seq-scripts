@@ -1,4 +1,13 @@
-### Make a volcano plot from RNA seq data
+########################################### 
+#    Make a volcano plot from RNA seq data
+#           Ryan Berger
+#            1-19-18
+# 
+# Original Source: http://www.gettinggeneticsdone.com/2014/05/r-volcano-plots-to-visualize-rnaseq-microarray.html
+#
+# Needed: a dataframe with 2 dimensional values to be plotted.
+#     - For RNA seq use log2FoldChange expression and pvalue
+########################################### 
 
 # Load data
 setwd("~/Desktop")
