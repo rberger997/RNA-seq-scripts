@@ -18,7 +18,7 @@ Tx <- transcripts(edb,
                   return.type = "DataFrame")
 head(Tx)
 # assign columns 1 (transcript ID) and 7 (gene ID) to dataframe tx2gene
-tx2gene <- Tx[,c(1,7)]
+ tx2gene <- Tx[,c(1,7)]
 head(tx2gene)
 
 # 
@@ -98,6 +98,28 @@ res <- results(dds)
 res
 summary(res)
 
+## Add annotation - symbol and entrezID
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+columns(org.Hs.eg.db)
+
+# Add column for gene name (symbol)
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys = row.names(res),
+                     column = 'SYMBOL',
+                     keytype = 'ENSEMBL',
+                     multiVals = 'first')
+# Add column for gene Entrez ID
+res$entrez <- mapIds(org.Hs.eg.db,
+                     keys = rownames(res),
+                     column = 'ENTREZID',
+                     keytype = 'ENSEMBL',
+                     multiVals = 'first')
+
+# Put results in order of the gene with the lowest p value
+resOrdered <- res[order(res$pvalue),]
+head(resOrdered)
+
 # Be more strict with results: lower false discovery rate threshold (padj) from 10% to 5%
 res.05 <- results(dds, alpha = 0.05)
 table(res.05$padj < 0.05)
@@ -144,36 +166,16 @@ with(resOrdered[1:5,], {
 
 head(res)
 res.df <- as.data.frame(res) 
+head(res.df)
 
 # Label a specific gene(s)
+library(dplyr)
 gene <- filter(res.df, symbol == 'MT1G') #'MT1G' 'MT2A'
 # Filter one value: symbol == 'X', filter a list: symbol %in% c(a,b,c)
 with(gene, {
   points(baseMean, log2FoldChange, col="dodgerblue", cex=2, lwd=2, pch = 1)
   text(baseMean, log2FoldChange, gene$symbol, pos=2, col="dodgerblue")
 })
-
-## Annotation
-library(AnnotationDbi)
-library(org.Hs.eg.db)
-columns(org.Hs.eg.db)
-
-# Add column for gene name (symbol)
-res$symbol <- mapIds(org.Hs.eg.db,
-                     keys = row.names(res),
-                     column = 'SYMBOL',
-                     keytype = 'ENSEMBL',
-                     multiVals = 'first')
-# Add column for gene Entrez ID
-res$entrez <- mapIds(org.Hs.eg.db,
-                     keys = rownames(res),
-                     column = 'ENTREZID',
-                     keytype = 'ENSEMBL',
-                     multiVals = 'first')
-# Put results in order of the gene with the lowest p value
-resOrdered <- res[order(res$pvalue),]
-head(resOrdered)
-
 
 ## Exporting results as csv file
 resOrderedDF <- as.data.frame(resOrdered)
@@ -231,6 +233,7 @@ gene <- as.character(row.names(gene))
 head(gene)
 class(gene)
 
+library(clusterProfiler)
 gene.df <- bitr(gene, fromType = 'ENSEMBL', toType = 'ENTREZID', OrgDb = org.Hs.eg.db)
 gene <- as.character(gene.df$ENTREZID)
 # Run GO analysis
@@ -253,7 +256,7 @@ barplot(ggo, drop = TRUE, showCategory = 20, decreasing = TRUE)
 # gene = character vector of selected genes for analysis (use ENTREZID format)
 # universe = character vector of all genes in dataset
 ego <- enrichGO(gene = gene,
-                universe = gene.a$ENTREZID,
+                universe = geneList$entrez,
                # keytype = 'ENSEMBL',
                 OrgDb = org.Hs.eg.db,
                 ont = 'BP',
@@ -262,6 +265,7 @@ ego <- enrichGO(gene = gene,
                 pvalueCutoff = 0.01,
                 qvalueCutoff = 0.05,
                 readable = TRUE)
+
 ## Gives error every time: No gene set have size > 2 (whatever you set minGSSize to)
 ## Fixed error:
 ## Only input ENTREZID format, not working when you put in ENSEMBL (even if specified in keytype)
