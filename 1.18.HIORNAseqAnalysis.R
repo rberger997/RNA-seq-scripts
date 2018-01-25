@@ -65,7 +65,7 @@ dds <- dds[rowSums(counts(dds)) > 1, ]
 # 12000 rows have been removed
 nrow(dds)
 
-## Perform variance stabilizing transformations using rlog
+# Perform variance stabilizing transformations using rlog
 # Should use argument 'blind = FALSE' but it's giving an error code. Leave it out for now.
 # blind = FALSE only works when multiple replicates are there
 rld <- rlog(dds, blind = FALSE)
@@ -144,6 +144,7 @@ decr.sig.df <- as.data.frame(decr.sig)
 
 
 ## Plotting results
+# Plot single gene counts
 topGene <- rownames(res)[which.min(res$padj)]
 plotCounts(dds, gene = topGene, intgroup = 'condition')
 
@@ -164,10 +165,6 @@ with(resOrdered[1:5,], {
   text(baseMean, log2FoldChange, resOrdered[1:5, 7], pos=4, col="dodgerblue")
 }) # pos = 1 (under), 2 (left), 3 (above), 4 (right)
 
-head(res)
-res.df <- as.data.frame(res) 
-head(res.df)
-
 # Label a specific gene(s)
 library(dplyr)
 gene <- filter(res.df, symbol == 'MT1G') #'MT1G' 'MT2A'
@@ -178,6 +175,10 @@ with(gene, {
 })
 
 ## Exporting results as csv file
+head(res)
+res.df <- as.data.frame(res) 
+head(res.df)
+
 resOrderedDF <- as.data.frame(resOrdered)
 write.csv(resOrderedDF, file = 'STMoverPBS.csv')
 
@@ -283,7 +284,26 @@ enrichMap(ego2, n = 20) # n = number of top nodes to look at, default is 50
 cnetplot(ego2)
 ?cnetplot
 
-plotGOgraph(ego)
+# plotGOgraph(ego)
 
-res.p <- res.df[res.df$pvalue < 0.05,]
-nrow(res.p)
+
+### Volcano plot
+head(res)
+# Data is in a dataframe with Gene name, log2foldchange, pvalue, padj
+
+# Make a basic volcano plot
+with(res, plot(log2FoldChange, -log10(pvalue), 
+               pch=20, 
+               main = 'HIOs STM/PBS Gene expression\n Volcano Plot' 
+               #, xlim=c(-10,10)
+))
+
+# Add colored points: red if padj<0.05, orange if log2FC>1, green if both
+with(subset(res, padj<0.05), points(log2FoldChange, -log10(pvalue), pch=20, col='red'))
+with(subset(res, abs(log2FoldChange)>1), points(log2FoldChange, -log10(pvalue), pch=20, col='green'))
+with(subset(res, padj<0.05 & abs(log2FoldChange)>1), points(log2FoldChange, -log10(pvalue), pch=20, col='orange'))
+
+# Label points with the textxy function from the calibrate plot
+# install.packages('calibrate')
+library(calibrate)
+with(subset(res, padj<0.05 & abs(log2FoldChange)>1), textxy(log2FoldChange, -log10(pvalue), labs=symbol, cex=.5) )
